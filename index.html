@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyFlowShow</title>
+    <title>MyFlowShow - Experiencia Gastronómica</title>
     
-    <!-- Cargar Tailwind CSS (Estilos) -->
+    <!-- Cargar Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Cargar React y Babel (Motor de la web) -->
+    <!-- Cargar React y Babel -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -21,24 +21,45 @@
             font-family: 'Oswald', sans-serif;
             background-color: #DFFF00; /* Amarillo Lima */
             overflow-x: hidden;
+            color: #000;
         }
         .font-display { font-family: 'Oswald', sans-serif; }
         .bg-brand-lime { background-color: #DFFF00; }
         
-        /* Gradiente para los botones verdes */
+        /* Botones con gradiente */
         .btn-gradient {
             background: linear-gradient(90deg, #00C9A7 0%, #00D2B6 100%);
         }
 
-        /* Clases para animaciones simples */
+        /* Animaciones de revelación */
         .reveal {
             opacity: 0;
-            transform: translateY(50px);
-            transition: all 1s ease-out;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
         }
         .reveal.active {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        /* Efecto de precio tachado */
+        .price-strikethrough {
+            position: relative;
+            display: inline-block;
+        }
+        .price-strikethrough::after {
+            content: '';
+            position: absolute;
+            left: -5%;
+            top: 50%;
+            width: 110%;
+            height: 3px;
+            background: #ff4d4d;
+            transform: rotate(-15deg);
+        }
+
+        .hero-title {
+            line-height: 1;
         }
     </style>
 </head>
@@ -48,12 +69,9 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- COMPONENTES DE ICONOS (SVG INLINE) ---
-        const IconStar = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-        );
-        const IconArrowRight = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        // Iconos SVG
+        const IconCheck = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"></polyline></svg>
         );
         const IconMessage = ({ className }) => (
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
@@ -61,25 +79,19 @@
         const IconUtensils = ({ className }) => (
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>
         );
-        const IconExternal = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-        );
 
-        // --- COMPONENTE PARA ANIMAR AL HACER SCROLL ---
+        // Componente de animación al hacer scroll
         const Reveal = ({ children, delay = 0 }) => {
             const ref = useRef(null);
-            
             useEffect(() => {
                 const observer = new IntersectionObserver(([entry]) => {
                     if (entry.isIntersecting) {
                         ref.current.classList.add('active');
                     }
-                }, { threshold: 0.1 });
-
+                }, { threshold: 0.05 });
                 if (ref.current) observer.observe(ref.current);
                 return () => { if (ref.current) observer.unobserve(ref.current); };
             }, []);
-
             return (
                 <div ref={ref} className="reveal" style={{ transitionDelay: `${delay}ms` }}>
                     {children}
@@ -87,66 +99,92 @@
             );
         };
 
-        // --- APP PRINCIPAL ---
         const App = () => {
             const whatsappNumber = "34623179849";
-            const whatsappMessage = encodeURIComponent("RESTAURANTE / DÍA / FECHA");
+            const whatsappMessage = encodeURIComponent("HOLA, QUIERO RESERVAR: RESTAURANTE / DÍA / FECHA");
             const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
             const theForkLink = "https://www.thefork.es/";
-            const naguLink = "https://restaurantenagu.es/";
+
+            const foodItems = [
+                {
+                    name: "Lomo Bajo de Vaca Vieja",
+                    desc: "Corte premium madurado 45 días, ternura extrema y sabor potente.",
+                    img: "https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=800&q=80",
+                    oldPrice: "23,00€"
+                },
+                {
+                    name: "Tataki de Atún Rojo",
+                    desc: "Atún de almadraba sellado con costra de sésamo y soja cítrica.",
+                    img: "https://images.unsplash.com/photo-1534422298391-e4f8c170db0a?auto=format&fit=crop&w=800&q=80",
+                    oldPrice: "21,50€"
+                },
+                {
+                    name: "Risotto de Setas y Trufa",
+                    desc: "Cremoso de arroz arbóreo con boletus y lascas de trufa negra.",
+                    img: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=800&q=80",
+                    oldPrice: "18,50€"
+                }
+            ];
 
             return (
                 <div className="min-h-screen selection:bg-teal-500 selection:text-white">
                     
-                    {/* --- HERO SECTION --- */}
-                    <section className="relative w-full bg-brand-lime min-h-[90vh] flex flex-col justify-center items-center px-6 pt-20 pb-20">
-                        <div className="max-w-4xl mx-auto text-center z-10">
+                    {/* --- SECCIÓN HERO --- */}
+                    <section className="relative w-full bg-brand-lime min-h-screen flex flex-col justify-center items-center px-6 py-20">
+                        <div className="max-w-6xl mx-auto text-center z-10">
                             
                             <Reveal>
-                                <h3 className="text-teal-600 font-display font-bold text-3xl mb-12 tracking-widest uppercase">
-                                    MyFlowShow
-                                </h3>
+                                <div className="inline-block bg-black text-white px-8 py-3 rounded-full font-bold text-xl md:text-2xl mb-12 tracking-widest uppercase shadow-xl">
+                                    🔥 ¡DISFRUTA DURANTE 1 AÑO! 🔥
+                                </div>
                             </Reveal>
 
                             <Reveal delay={200}>
-                                <h1 className="font-display font-bold text-black text-7xl md:text-9xl leading-[0.9] mb-8 uppercase">
-                                    Paga 25€ <br/>
-                                    <span className="text-teal-600">y come</span>
-                                </h1>
+                                <div className="space-y-4">
+                                    <h1 className="font-display font-bold text-black text-6xl md:text-8xl hero-title uppercase italic">
+                                        PAGA SOLO <span className="bg-teal-600 text-white px-4 py-1">25€</span>
+                                    </h1>
+                                    <h1 className="font-display font-bold text-black text-7xl md:text-[10rem] hero-title uppercase leading-none">
+                                        Y COME POR <br/>
+                                        <span className="text-white bg-black px-6 inline-block transform -rotate-1 shadow-2xl">75€</span>
+                                    </h1>
+                                </div>
                             </Reveal>
 
                             <Reveal delay={400}>
-                                <h2 className="font-display font-bold text-black text-6xl md:text-8xl leading-none mb-12 uppercase">
-                                    Gratis <br/>
-                                    <span className="text-4xl md:text-5xl font-normal block mt-4">por mes con 75€</span>
-                                </h2>
+                                <div className="mt-12">
+                                    <p className="text-2xl md:text-4xl text-black font-bold uppercase max-w-3xl mx-auto leading-snug">
+                                        AHORRA 50€.
+                                    </p>
+                                    <p className="text-xl md:text-2xl mt-4 text-black font-medium uppercase max-w-2xl mx-auto italic">
+                                        Date el capricho que te mereces en los mejores sitios.
+                                    </p>
+                                </div>
                             </Reveal>
 
                             <Reveal delay={600}>
-                                <div className="mt-16 animate-bounce">
-                                    <IconArrowRight className="w-12 h-12 text-black mx-auto rotate-90" />
+                                <div className="mt-16 flex flex-col items-center gap-4">
+                                    <div className="w-1 h-24 bg-gradient-to-b from-black to-transparent"></div>
                                 </div>
                             </Reveal>
                         </div>
                     </section>
 
-                    {/* --- STEPS SECTION --- */}
-                    <section className="relative w-full bg-brand-lime py-24 px-6 md:px-12">
-                        <div className="max-w-5xl mx-auto space-y-32">
+                    {/* --- SECCIÓN PASOS --- */}
+                    <section className="relative w-full bg-brand-lime py-20 px-6">
+                        <div className="max-w-4xl mx-auto space-y-32">
                             
                             {/* PASO 1 */}
                             <Reveal>
-                                <div className="flex flex-col items-center text-center space-y-8 relative">
-                                    <span className="font-display text-8xl text-black/10 absolute -z-10 select-none top-[-20px]">01</span>
-                                    <h3 className="font-display text-3xl md:text-5xl text-black uppercase max-w-2xl leading-tight z-10">
-                                        1 - Mira tu restaurante al que quieras ir
+                                <div className="flex flex-col items-center text-center space-y-8">
+                                    <div className="w-20 h-20 bg-black text-white rounded-full flex items-center justify-center text-4xl font-bold shadow-lg border-2 border-white/20">1</div>
+                                    <h3 className="font-display text-4xl md:text-5xl text-black uppercase leading-tight font-bold">
+                                        Mira el restaurante al que quieras ir
                                     </h3>
-                                    
-                                    <a href={theForkLink} target="_blank" rel="noopener noreferrer" className="group relative z-10 hover:scale-105 transition-transform duration-300">
-                                        <div className="btn-gradient w-72 h-20 rounded-2xl shadow-lg flex items-center justify-center cursor-pointer">
-                                            <span className="font-display text-2xl text-white tracking-wide flex items-center gap-3">
-                                                <IconUtensils className="w-6 h-6" /> VER RESTAURANTES
-                                            </span>
+                                    <a href={theForkLink} target="_blank" rel="noopener noreferrer" className="hover:scale-105 transition-transform">
+                                        <div className="btn-gradient px-10 py-5 rounded-2xl shadow-xl flex items-center gap-3">
+                                            <IconUtensils className="w-6 h-6 text-white" />
+                                            <span className="font-display text-2xl text-white font-bold">VER RESTAURANTES</span>
                                         </div>
                                     </a>
                                 </div>
@@ -154,125 +192,104 @@
 
                             {/* PASO 2 */}
                             <Reveal>
-                                <div className="flex flex-col items-center text-center space-y-8 relative">
-                                    <span className="font-display text-8xl text-black/10 absolute -z-10 select-none top-[-20px]">02</span>
-                                    <h3 className="font-display text-3xl md:text-5xl text-black uppercase max-w-4xl leading-tight z-10">
-                                        2 - Mándanos un mensaje al WhatsApp con hora, día y sitio. Nosotros reservamos por ti.
+                                <div className="flex flex-col items-center text-center space-y-8">
+                                    <div className="w-20 h-20 bg-black text-white rounded-full flex items-center justify-center text-4xl font-bold shadow-lg border-2 border-white/20">2</div>
+                                    <h3 className="font-display text-4xl md:text-5xl text-black uppercase leading-tight max-w-2xl font-bold">
+                                        Mándanos WhatsApp. Nosotros reservamos por ti.
                                     </h3>
-                                    
-                                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="group relative z-10 hover:scale-105 transition-transform duration-300">
-                                        <div className="btn-gradient w-72 h-20 rounded-2xl shadow-lg flex items-center justify-center cursor-pointer">
-                                            <span className="font-display text-2xl text-white tracking-wide flex items-center gap-3">
-                                                <IconMessage className="w-6 h-6" /> RESERVAR AHORA
-                                            </span>
+                                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="hover:scale-105 transition-transform">
+                                        <div className="btn-gradient px-10 py-5 rounded-2xl shadow-xl flex items-center gap-3">
+                                            <IconMessage className="w-6 h-6 text-white" />
+                                            <span className="font-display text-2xl text-white font-bold">CHAT WHATSAPP</span>
                                         </div>
                                     </a>
-                                    <p className="text-xs text-black/60 font-mono mt-2 uppercase tracking-widest">Enlace directo a chat</p>
+                                    <div className="bg-black text-white p-8 rounded-3xl max-w-md shadow-2xl">
+                                        <p className="font-bold uppercase text-lg mb-2 text-teal-400">Gestión Directa</p>
+                                        <p className="text-base md:text-lg leading-snug font-medium">Cualquier duda se gestiona por allí directamente.</p>
+                                        <div className="h-px bg-zinc-800 my-4"></div>
+                                        <p className="text-sm text-zinc-400 italic font-mono uppercase tracking-widest text-center">Pago por Bizum • Factura disponible</p>
+                                    </div>
                                 </div>
                             </Reveal>
 
-                            {/* PASO 3 */}
+                            {/* PASO 3 - LEGIBLE Y REVISADO */}
                             <Reveal>
-                                <div className="flex flex-col items-center text-center space-y-6 relative">
-                                    <span className="font-display text-8xl text-black/10 absolute -z-10 select-none top-[-20px]">03</span>
-                                    <h3 className="font-display text-3xl md:text-5xl text-black uppercase max-w-4xl leading-tight z-10">
-                                        3 - Disfruta de tus 25€ de descuento en la cuenta + el descuento del restaurante
-                                    </h3>
-                                    <p className="text-xl font-display uppercase text-black/70 z-10">
-                                        (Si llegas puntual)
-                                    </p>
-                                </div>
-                            </Reveal>
-
-                            {/* DISCLAIMER */}
-                            <Reveal delay={200}>
-                                <div className="text-center pt-12 border-t border-black/10">
-                                    <p className="font-display font-bold text-black text-lg uppercase">
-                                        Descuento máximo aplicable 25€ por mesa
-                                    </p>
-                                    <p className="font-display text-black text-md uppercase mt-2">
-                                        Repítelo 2 veces más y llega a comer con 75€ sin pagar un duro
-                                    </p>
+                                <div className="flex flex-col items-center text-center space-y-10 bg-black p-12 md:p-20 rounded-[3rem] shadow-2xl border-4 border-white/10 relative overflow-hidden">
+                                    <div className="w-24 h-24 bg-white text-black rounded-full flex items-center justify-center text-5xl font-bold shadow-white/20 shadow-lg border-4 border-brand-lime">3</div>
+                                    <div className="space-y-4">
+                                        <h3 className="font-display text-5xl md:text-7xl uppercase leading-none italic font-bold text-white">
+                                            DISFRUTA COMIENDO <span className="text-brand-lime">DE LUJO</span>
+                                        </h3>
+                                        <p className="font-display text-2xl md:text-4xl text-zinc-300 uppercase leading-tight font-medium">
+                                            Disfruta comiendo gratis o prácticamente gratis y encima comiendo de lujo.
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-xl md:text-2xl font-display uppercase bg-brand-lime text-black px-10 py-4 rounded-full font-bold shadow-xl">
+                                        SOLO TIENES QUE DISFRUTAR
+                                    </div>
                                 </div>
                             </Reveal>
 
                         </div>
                     </section>
 
-                    {/* --- TOP RATED SECTION (BLACK) --- */}
-                    <section className="w-full bg-black text-white py-32 px-6">
+                    {/* --- GALERÍA DE COMIDA --- */}
+                    <section className="w-full bg-zinc-950 text-white py-32 px-6">
                         <div className="max-w-6xl mx-auto">
                             
                             <Reveal>
-                                <div className="mb-24 text-center md:text-left">
-                                    <h2 className="font-display text-6xl md:text-8xl uppercase leading-none mb-4">
-                                        Restaurantes <br/>
-                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">
-                                            Mejor Valorados
-                                        </span>
+                                <div className="text-center mb-24">
+                                    <h2 className="font-display text-5xl md:text-8xl uppercase leading-[0.85] mb-6 font-bold">
+                                        MIRA LO QUE TE PUEDES <br/>
+                                        <span className="text-brand-lime italic underline decoration-white/20">COMER GRATIS</span>
                                     </h2>
+                                    <p className="text-zinc-500 text-xl md:text-2xl uppercase tracking-widest">GASTRONOMÍA DE ALTO NIVEL POR 0€</p>
                                 </div>
                             </Reveal>
 
-                            {/* RESTAURANT CARD 1 */}
-                            <Reveal delay={300}>
-                                <div className="flex flex-col md:flex-row gap-12 items-center justify-center">
-                                    {/* Numero gigante */}
-                                    <div className="font-display text-9xl md:text-[12rem] leading-none text-white select-none">
-                                        1
-                                    </div>
-
-                                    {/* Card Content */}
-                                    <div className="relative group w-full max-w-md hover:scale-[1.02] transition-transform duration-500">
-                                        <div className="absolute -inset-1 bg-gradient-to-r from-teal-400 to-lime-400 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
-                                        <div className="relative bg-zinc-900 ring-1 ring-gray-800 rounded-lg overflow-hidden shadow-2xl">
-                                            
-                                            {/* Imagen del restaurante */}
-                                            <div className="h-64 overflow-hidden relative">
-                                            <img 
-                                                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
-                                                alt="Restaurante Nagu Interior" 
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                            />
-                                            <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
-                                                <IconStar className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                                <span className="text-white font-bold text-sm">5.0</span>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                                {foodItems.map((item, index) => (
+                                    <Reveal key={index} delay={index * 150}>
+                                        <div className="group bg-zinc-900 rounded-[2rem] overflow-hidden shadow-2xl border border-white/5 flex flex-col h-full hover:border-brand-lime/30 transition-colors">
+                                            <div className="h-72 overflow-hidden relative">
+                                                <img 
+                                                    src={item.img} 
+                                                    alt={item.name} 
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
                                             </div>
-                                            </div>
-
-                                            {/* Info y Boton */}
-                                            <div className="p-8 text-center">
-                                            <h3 className="font-display text-4xl text-white mb-2">NAGU</h3>
-                                            <div className="flex justify-center gap-1 mb-6">
-                                                {[1,2,3,4,5].map((s) => (
-                                                    <IconStar key={s} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                                                ))}
-                                            </div>
-                                            <p className="text-gray-400 mb-8 italic">"Una experiencia gastronómica inolvidable con el mejor ambiente de la ciudad."</p>
-                                            
-                                            <a 
-                                                href={naguLink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-block w-full"
-                                            >
-                                                <div className="bg-gradient-to-r from-teal-400 to-lime-400 rounded-xl py-3 px-6 text-black font-display text-xl uppercase tracking-wider font-bold hover:shadow-[0_0_20px_rgba(100,255,218,0.5)] transition-all flex items-center justify-center gap-2">
-                                                    Ver Restaurante <IconExternal className="w-5 h-5" />
+                                            <div className="p-10 flex flex-col flex-grow text-left">
+                                                <h4 className="font-display text-3xl mb-3 uppercase text-white font-bold">{item.name}</h4>
+                                                <p className="text-zinc-400 text-base mb-10 leading-relaxed font-sans font-medium">{item.desc}</p>
+                                                
+                                                <div className="mt-auto flex items-end justify-between border-t border-zinc-800 pt-8">
+                                                    <div>
+                                                        <span className="block text-xs uppercase text-zinc-500 mb-2 font-bold tracking-widest">ANTES</span>
+                                                        <span className="price-strikethrough text-2xl text-zinc-500 font-bold italic">{item.oldPrice}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="block text-xs uppercase text-brand-lime mb-2 font-black tracking-widest">PARA TI</span>
+                                                        <span className="text-6xl font-display font-bold text-brand-lime leading-none shadow-brand-lime/20">0€</span>
+                                                    </div>
                                                 </div>
-                                            </a>
                                             </div>
-
                                         </div>
-                                    </div>
-                                </div>
-                            </Reveal>
-
+                                    </Reveal>
+                                ))}
+                            </div>
                         </div>
                     </section>
 
-                    {/* FOOTER */}
-                    <footer className="bg-black text-white/40 py-8 text-center font-mono text-sm border-t border-white/10">
-                        <p>MYFLOWSHOW © {new Date().getFullYear()}</p>
+                    {/* --- PIE DE PÁGINA --- */}
+                    <footer className="bg-zinc-950 text-white/30 py-16 text-center font-mono text-xs md:text-sm border-t border-white/5">
+                        <div className="max-w-4xl mx-auto px-6">
+                            <p className="mb-6 tracking-[0.3em] font-bold text-zinc-500 uppercase">MYFLOWSHOW © {new Date().getFullYear()}</p>
+                            <p className="max-w-2xl mx-auto leading-relaxed uppercase">
+                                Los 25€ se descuentan del ticket final. Acumula beneficios para cenas de 75€ con coste cero. 
+                                Oferta activa por 12 meses. Sujeto a disponibilidad y reserva previa.
+                            </p>
+                        </div>
                     </footer>
                 </div>
             );
